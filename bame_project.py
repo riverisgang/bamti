@@ -161,4 +161,64 @@ elif page == "패션 & 퍼스널 컬러 👗":
             "사진 많이 찍는 날 📸":"대비되는 색 하나 포함",
             "편하게 🛋️":"후드티/니트 + 편한 바지"
         }
-        st.write(f"- 스타일 무드: {st
+        st.write(f"- 스타일 무드: {style_msg.get(style_mood)}")
+        if items:
+            st.write(f"- 선택 아이템 활용: {', '.join(items)}")
+        if acc:
+            st.write(f"- 액세서리 포인트: {', '.join(acc)}")
+
+# ----------------- SNS 브랜딩 -----------------
+elif page == "SNS 브랜딩 📸":
+    st.markdown("## SNS 브랜딩 & 피드 추천 📸")
+    st.write("사진 기반 필터, 폰트, 음악, 스티커 추천")
+    line()
+    msg = st.text_area("전달하고 싶은 메시지 🌈", placeholder="오늘 너무 뿌듯한 하루였어!")
+    vibe = st.selectbox("계정 분위기", ["꾸안꾸 데일리","공부/기록","갬성 사진","친구들과","아직 잘 모르겠음"])
+    img_file = st.file_uploader("사진 업로드", type=["png","jpg","jpeg"])
+    if st.button("📸 브랜딩 추천"):
+        if not msg.strip():
+            st.warning("메시지를 입력해주세요")
+        else:
+            st.markdown("### ✨ 추천 브랜딩 요소")
+            st.write("- 추천 필터: 자연광 느낌 필터")
+            st.write("- 추천 폰트: 깔끔한 산세리프 폰트")
+            st.write("- 추천 음악/사운드: 잔잔한 BGM")
+            st.write("- 스티커 사용 팁: 하트, 별, 체크리스트 스티커")
+            st.write("- 캡션 작성 팁: 짧은 한 문장 + 구체적 이야기")
+
+# ----------------- 밈 설명 -----------------
+elif page == "요즘 밈 설명 😂":
+    st.markdown("## 요즘 밈 설명")
+    meme = st.selectbox("궁금한 밈", ["선택 안 함","어? 왜 안돼요?","멍 때리다 현실 복귀","00학번 갬성","전체 설명"])
+    if meme=="어? 왜 안돼요?":
+        st.write("에러나거나 이해 안될 때 귀엽게 당황한 밈")
+    elif meme=="멍 때리다 현실 복귀":
+        st.write("멍하다가 갑자기 현실로 돌아올 때 쓰는 짤")
+    elif meme=="00학번 갬성":
+        st.write("옛날 디카/필카 느낌 필터")
+
+# ----------------- 오늘의 밤티 점수 -----------------
+elif page == "오늘의 밤티 점수 🔮":
+    st.markdown("## 오늘의 밤티 점수 🔮")
+    st.write("점수가 높을수록 안 좋음 🔥")
+    line()
+    q1 = st.slider("대화 준비 😄",1,5,3)
+    q2 = st.slider("옷차림 만족 👗",1,5,3)
+    q3 = st.slider("SNS 올릴 의향 📸",1,5,3)
+    q4 = st.slider("멘탈 안정 🧠",1,5,3)
+    q5 = st.slider("도전 정신 🚀",1,5,3)
+    if st.button("🔮 점수 보기"):
+        score = int((q1+q2+q3+q4+q5)/25*100)
+        st.metric("오늘의 밤티 점수", f"{score}/100")
+        fig, ax = plt.subplots()
+        ax.pie([score,100-score], labels=["점수","남은"], colors=["#ff6f61","#cfcfcf"], startangle=90, counterclock=False)
+        st.pyplot(fig)
+        if score>=80:
+            msg="오늘 밤티 점수 최상위 💜 충전 필요"
+        elif score>=60:
+            msg="오늘 꽤 괜찮아요 🙂 약간 휴식만"
+        elif score>=40:
+            msg="조금 피곤하거나 예민할 수 있어 🌱"
+        else:
+            msg="휴식 권장 ☁️"
+        st.info(msg)
