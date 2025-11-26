@@ -2,5 +2,4 @@ streamlit
 numpy
 Pillow
 matplotlib
-opencv-python
 openai
