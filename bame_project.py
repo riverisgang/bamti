@@ -5,6 +5,11 @@ import openai
 import matplotlib.pyplot as plt
 
 # ---------------------------
+# OpenAI API 키 직접 입력 (테스트용)
+# ---------------------------
+openai.api_key = "여기에_직접_API_KEY_입력"  # <-- 자신의 OpenAI API 키로 교체
+
+# ---------------------------
 # 기본 설정
 # ---------------------------
 st.set_page_config(
@@ -12,8 +17,6 @@ st.set_page_config(
     page_icon="🌙",
     layout="centered"
 )
-
-openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 PRIMARY = "#3D3B8E"
 BG = "#F9F9F9"
@@ -39,7 +42,7 @@ def card(text):
     )
 
 # ---------------------------
-# AI 대화 코치 (OpenAI)
+# AI 대화 코치
 # ---------------------------
 def ai_generate_replies(relation, mood, chat_log):
     prompt = f"""
@@ -51,7 +54,6 @@ def ai_generate_replies(relation, mood, chat_log):
 위 상황을 자연스럽게 이어가는 부담 없고 따뜻한 톤의 답변을 3개 생성해줘.
 각 답변은 1~2문장 정도로 해줘.
 """
-
     try:
         res = openai.ChatCompletion.create(
             model="gpt-4o-mini",
@@ -66,19 +68,18 @@ def ai_generate_replies(relation, mood, chat_log):
         return ["⚠️ AI 요청에 문제가 발생했습니다. 다시 시도해주세요."]
 
 # ---------------------------
-# 퍼스널컬러 분석(Pillow 버전)
+# 퍼스널컬러 분석 (Pillow)
 # ---------------------------
 def analyze_skin_tone_pillow(image):
     img = np.array(image)
 
-    # 중앙 부분만 샘플링 (얼굴 주변 잡색 방지)
+    # 중앙 부분만 샘플링
     h, w, _ = img.shape
     crop = img[h//4:h*3//4, w//4:w*3//4]
 
     avg_rgb = np.mean(crop.reshape(-1,3), axis=0)
     r, g, b = avg_rgb
 
-    # 매우 단순화한 웜/쿨 분류 (R-B 차이)
     if r - b > 15:
         tone = "Warm Tone"
         desc = "웜톤 (노란/골드 계열이 잘 어울려요!)"
@@ -137,7 +138,7 @@ elif page == "대화 코치(AI)":
             card(r)
 
 # ---------------------------
-# 퍼스널컬러 분석 (CV2 없이)
+# 퍼스널컬러 분석
 # ---------------------------
 elif page == "퍼스널컬러 분석":
     st.subheader("🎨 퍼스널컬러 자동 분석")
@@ -165,7 +166,7 @@ elif page == "퍼스널컬러 분석":
         show_palette(palette)
 
 # ---------------------------
-# SNS 브랜딩
+# SNS 브랜딩 (보류)
 # ---------------------------
 elif page == "SNS 브랜딩(보류)":
     st.subheader("📷 SNS 브랜딩 기능")
