@@ -1,5 +1,6 @@
 streamlit
 numpy
 Pillow
-openai
 matplotlib
+opencv-python
+openai
