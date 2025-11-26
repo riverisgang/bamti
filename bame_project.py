@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 st.sidebar.title("BAME (Bamti Escape) 💜")
-st.sidebar.write("SNS 시대 통합 자기관리 앱 데모")
+st.sidebar.write("SNS 시대 통합 자기관리 앱 ")
 
 # 🔑 OpenAI API 키 (secrets.toml 사용)
 # .streamlit/secrets.toml 예시:
