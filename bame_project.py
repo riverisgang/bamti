@@ -5,12 +5,12 @@ import openai
 import matplotlib.pyplot as plt
 
 # ---------------------------
-# OpenAI API 키 직접 입력 (테스트용)
+# OpenAI API 키 로드 (Secret 방식)
 # ---------------------------
-openai.api_key = "여기에_직접_API_KEY_입력"  # <-- 자신의 OpenAI API 키로 교체
+openai.api_key = st.secrets["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"]
 
 # ---------------------------
-# 기본 설정
+# 기본 UI 설정
 # ---------------------------
 st.set_page_config(
     page_title="BAME - bamtiescape",
@@ -56,37 +56,34 @@ def ai_generate_replies(relation, mood, chat_log):
 """
     try:
         res = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role":"user", "content": prompt}],
+            model="gpt-3.5-turbo",
+            messages=[{"role":"user","content":prompt}],
             temperature=0.7
         )
         output = res.choices[0].message["content"].strip()
         replies = output.split("\n")
         replies = [r.replace("-", "").strip() for r in replies if r.strip()]
         return replies[:3]
-    except:
-        return ["⚠️ AI 요청에 문제가 발생했습니다. 다시 시도해주세요."]
+    except Exception as e:
+        st.error(f"AI 요청 실패: {e}")
+        return []
 
 # ---------------------------
-# 퍼스널컬러 분석 (Pillow)
+# 퍼스널컬러 분석
 # ---------------------------
 def analyze_skin_tone_pillow(image):
     img = np.array(image)
-
-    # 중앙 부분만 샘플링
     h, w, _ = img.shape
     crop = img[h//4:h*3//4, w//4:w*3//4]
-
     avg_rgb = np.mean(crop.reshape(-1,3), axis=0)
     r, g, b = avg_rgb
 
     if r - b > 15:
-        tone = "Warm Tone"
-        desc = "웜톤 (노란/골드 계열이 잘 어울려요!)"
+        tone = "웜톤 (Warm Tone)"
+        desc = "노란/골드 계열이 잘 어울려요!"
     else:
-        tone = "Cool Tone"
-        desc = "쿨톤 (블루/실버 계열이 잘 어울려요!)"
-
+        tone = "쿨톤 (Cool Tone)"
+        desc = "블루/실버 계열이 잘 어울려요!"
     return tone, desc, avg_rgb
 
 def show_palette(colors):
@@ -109,12 +106,8 @@ page = st.sidebar.radio(
 # HOME
 # ---------------------------
 if page == "Home":
-    st.markdown(
-        f"""
-        <h1 style="color:{PRIMARY};">🌙 BAME (bamtiescape)</h1>
-        <p style="color:{PRIMARY};">SNS·대화·패션 고민을 해결하는 통합 자기관리 앱</p>
-        """, unsafe_allow_html=True
-    )
+    st.markdown(f"<h1 style='color:{PRIMARY};'>🌙 BAME (bamtiescape)</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:{PRIMARY};'>SNS·대화·패션 고민을 해결하는 통합 자기관리 앱</p>", unsafe_allow_html=True)
     card("✔ AI 기반 대화 코치")
     card("✔ 이미지 기반 퍼스널컬러 분석")
     card("✔ SNS 브랜딩 기능(업데이트 예정)")
@@ -126,43 +119,39 @@ if page == "Home":
 # ---------------------------
 elif page == "대화 코치(AI)":
     st.subheader("💬 AI 대화 코치")
-
-    relationship = st.selectbox("상대방과의 관계", ["친구", "썸", "연인", "직장/업무", "가족"])
+    relationship = st.selectbox("상대방과의 관계", ["친구", "썸/연애", "연인", "직장/업무", "가족"])
     mood = st.selectbox("대화 분위기", ["가벼움", "진지함", "어색함", "설렘"])
     chat_log = st.text_area("최근 대화 내용을 붙여넣어주세요")
 
     if st.button("AI 답변 생성"):
-        replies = ai_generate_replies(relationship, mood, chat_log)
-        st.markdown("### ✨ 추천 답변")
-        for r in replies:
-            card(r)
+        if not chat_log.strip():
+            st.warning("대화 내용을 입력해주세요!")
+        else:
+            replies = ai_generate_replies(relationship, mood, chat_log)
+            if replies:
+                st.markdown("### ✨ 추천 답변")
+                for r in replies:
+                    card(r)
 
 # ---------------------------
 # 퍼스널컬러 분석
 # ---------------------------
 elif page == "퍼스널컬러 분석":
     st.subheader("🎨 퍼스널컬러 자동 분석")
-
     img_file = st.file_uploader("얼굴이 보이는 사진을 업로드해주세요", type=["jpg","jpeg","png"])
-
-    if img_file is not None:
+    if img_file:
         image = Image.open(img_file).convert("RGB")
         st.image(image, caption="업로드한 이미지", use_column_width=True)
-
         tone, desc, avg_rgb = analyze_skin_tone_pillow(image)
-
         st.markdown(f"### 🔍 분석 결과: **{tone}**")
         card(desc)
-
         st.markdown("### 평균 RGB")
         card(f"R: {avg_rgb[0]:.2f} | G: {avg_rgb[1]:.2f} | B: {avg_rgb[2]:.2f}")
-
         st.markdown("### 추천 컬러 팔레트")
-        if tone == "Warm Tone":
-            palette = [[255/255,204/255,153/255], [255/255,153/255,102/255], [204/255,153/255,102/255]]
+        if "웜" in tone:
+            palette = [[1,0.84,0.6],[1,0.6,0.4],[0.8,0.6,0.4]]  # RGB 0~1
         else:
-            palette = [[153/255,204/255,255/255], [102/255,153/255,255/255], [102/255,102/255,204/255]]
-
+            palette = [[0.6,0.8,1],[0.4,0.6,1],[0.4,0.4,0.8]]
         show_palette(palette)
 
 # ---------------------------
@@ -177,11 +166,11 @@ elif page == "SNS 브랜딩(보류)":
 # ---------------------------
 elif page == "밈 설명":
     st.subheader("😂 최신 밈 설명")
-    st.write("여기에 너희 팀이 직접 콘텐츠 추가하면 돼!")
+    st.write("팀에서 직접 콘텐츠 추가 예정")
 
 # ---------------------------
-# 밤티 점수
+# 오늘의 밤티 점수
 # ---------------------------
 elif page == "오늘의 밤티 점수":
     st.subheader("🌙 오늘의 밤티 점수")
-    st.write("현재 기본 버전입니다. 추후 강화 가능!")
+    st.write("기본 버전입니다. 추후 강화
