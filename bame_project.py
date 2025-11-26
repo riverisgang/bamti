@@ -7,7 +7,11 @@ import matplotlib.pyplot as plt
 import openai
 
 # ---------------- OpenAI API ----------------
-openai.api_key = "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 야. "  # 실제 키는 안전하게 관리하세요
+# 안전하게 Secrets에 넣고 불러오는 것을 권장
+# st.secrets.toml 예시:
+# [openai]
+# api_key = "sk-실제키"
+openai.api_key = st.secrets["openai"]["api_key"]
 
 # ---------------- 기본 설정 ----------------
 st.set_page_config(
@@ -101,12 +105,13 @@ elif page == "대화 코치 💬":
                 )
                 
                 message_content = response['choices'][0]['message']['content']
-                
+
+                # 카드형 UI로 한 줄씩 표시
                 for msg in message_content.split("\n"):
                     clean_msg = msg.strip()
                     if clean_msg:
                         st.markdown(f"<div class='card'>{clean_msg}</div>", unsafe_allow_html=True)
-                        
+
             except Exception as e:
                 st.error(f"AI 답변 생성 오류 발생: {e}")
 
@@ -207,18 +212,4 @@ elif page == "오늘의 밤티 점수 🔮":
     q3 = st.slider("SNS 올릴 의향 📸",1,5,3)
     q4 = st.slider("멘탈 안정 🧠",1,5,3)
     q5 = st.slider("도전 정신 🚀",1,5,3)
-    if st.button("🔮 점수 보기"):
-        score = int((q1+q2+q3+q4+q5)/25*100)
-        st.metric("오늘의 밤티 점수", f"{score}/100")
-        fig, ax = plt.subplots()
-        ax.pie([score,100-score], labels=["점수","남은"], colors=["#ff6f61","#cfcfcf"], startangle=90, counterclock=False)
-        st.pyplot(fig)
-        if score>=80:
-            msg="오늘 밤티 점수 최상위 💜 충전 필요"
-        elif score>=60:
-            msg="오늘 꽤 괜찮아요 🙂 약간 휴식만"
-        elif score>=40:
-            msg="조금 피곤하거나 예민할 수 있어 🌱"
-        else:
-            msg="휴식 권장 ☁️"
-        st.info(msg)
+    if st.button("🔮 점수
