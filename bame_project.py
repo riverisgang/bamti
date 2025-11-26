@@ -8,7 +8,7 @@ import openai
 
 # ---------------- OpenAI API ----------------
 # ⚠️ 위험 감수하고 코드에 키 직접 입력
-openai.api_key = "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"
+openai.api_key = r"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"
 
 # ---------------- 기본 설정 ----------------
 st.set_page_config(
