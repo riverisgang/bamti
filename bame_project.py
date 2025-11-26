@@ -7,11 +7,8 @@ import matplotlib.pyplot as plt
 import openai
 
 # ---------------- OpenAI API ----------------
-# 안전하게 Secrets에 넣고 불러오는 것을 권장
-# st.secrets.toml 예시:
-# [openai]
-# api_key = "sk-실제키"
-openai.api_key = st.secrets["openai"]["api_key"]
+# ⚠️ 위험 감수하고 직접 코드에 키 입력
+openai.api_key = "sk-여기에_실제_API_KEY_입력"
 
 # ---------------- 기본 설정 ----------------
 st.set_page_config(
@@ -134,14 +131,10 @@ elif page == "패션 & 퍼스널 컬러 👗":
         if face_img:
             img = Image.open(face_img).convert("RGB")
             img_arr = np.array(img)
-
-            # 중앙 영역 평균 색상으로 얼굴 톤 추정
             h, w, _ = img_arr.shape
             face_region = img_arr[h//4:h*3//4, w//4:w*3//4]
-
             avg_color = face_region.mean(axis=(0,1)).astype(int)
             st.write(f"- 얼굴 평균 RGB: {tuple(avg_color)}")
-
             R, G, B = avg_color
             if R > B:
                 tone = "Warm"
@@ -149,15 +142,13 @@ elif page == "패션 & 퍼스널 컬러 👗":
             else:
                 tone = "Cool"
                 palette = ["#ADD8E6", "#87CEFA", "#9370DB"]
-
             st.write(f"- 분석 톤: {tone}")
-
             fig, ax = plt.subplots(figsize=(4,1))
             ax.imshow([palette])
             ax.axis('off')
             st.pyplot(fig)
         else:
-            st.info("얼굴 이미지를 업로드하면 자동으로 퍼스널 컬러 분석이 가능합니다.")
+            st.info("얼굴 이미지를 업로드하면 자동으로 퍼스널 컬러 분석 가능")
 
         style_msg = {
             "귀엽게 💕":"루즈핏 상의 + 밝은 하의",
@@ -177,7 +168,7 @@ elif page == "SNS 브랜딩 📸":
     st.markdown("## SNS 브랜딩 & 피드 추천 📸")
     st.write("사진 기반 필터, 폰트, 음악, 스티커 추천")
     line()
-    msg = st.text_area("전달하고 싶은 메시지 🌈", placeholder="오늘 너무 뿌듯한 하루였어!")
+    msg = st.text_area("전달 메시지 🌈", placeholder="오늘 너무 뿌듯한 하루였어!")
     vibe = st.selectbox("계정 분위기", ["꾸안꾸 데일리","공부/기록","갬성 사진","친구들과","아직 잘 모르겠음"])
     img_file = st.file_uploader("사진 업로드", type=["png","jpg","jpeg"])
     if st.button("📸 브랜딩 추천"):
@@ -194,22 +185,4 @@ elif page == "SNS 브랜딩 📸":
 # ----------------- 밈 설명 -----------------
 elif page == "요즘 밈 설명 😂":
     st.markdown("## 요즘 밈 설명")
-    meme = st.selectbox("궁금한 밈", ["선택 안 함","어? 왜 안돼요?","멍 때리다 현실 복귀","00학번 갬성","전체 설명"])
-    if meme=="어? 왜 안돼요?":
-        st.write("에러나거나 이해 안될 때 귀엽게 당황한 밈")
-    elif meme=="멍 때리다 현실 복귀":
-        st.write("멍하다가 갑자기 현실로 돌아올 때 쓰는 짤")
-    elif meme=="00학번 갬성":
-        st.write("옛날 디카/필카 느낌 필터")
-
-# ----------------- 오늘의 밤티 점수 -----------------
-elif page == "오늘의 밤티 점수 🔮":
-    st.markdown("## 오늘의 밤티 점수 🔮")
-    st.write("점수가 높을수록 안 좋음 🔥")
-    line()
-    q1 = st.slider("대화 준비 😄",1,5,3)
-    q2 = st.slider("옷차림 만족 👗",1,5,3)
-    q3 = st.slider("SNS 올릴 의향 📸",1,5,3)
-    q4 = st.slider("멘탈 안정 🧠",1,5,3)
-    q5 = st.slider("도전 정신 🚀",1,5,3)
-    if st.button("🔮 점수
+    meme = st.selectbox("궁금한 밈", ["선택 안 함","어? 왜 안돼요?","멍 때리다 현실 복귀","00학번 갬성",]()
