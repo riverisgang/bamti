@@ -4,8 +4,8 @@ import random
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2
 import openai
+import face_recognition
 
 # ---------------- OpenAI API ----------------
 openai.api_key = "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"
@@ -130,14 +130,11 @@ elif page == "패션 & 퍼스널 컬러 👗":
             img = Image.open(face_img).convert("RGB")
             img_arr = np.array(img)
 
-            # 얼굴 검출
-            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            gray = cv2.cvtColor(img_arr, cv2.COLOR_RGB2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-            if len(faces) > 0:
-                x, y, w, h = faces[0]
-                face_region = img_arr[y:y+h, x:x+w]
+            # 얼굴 위치 감지 (face_recognition 사용)
+            face_locations = face_recognition.face_locations(img_arr)
+            if face_locations:
+                top, right, bottom, left = face_locations[0]
+                face_region = img_arr[top:bottom, left:right]
 
                 avg_color = face_region.mean(axis=(0,1)).astype(int)
                 st.write(f"- 얼굴 평균 RGB: {tuple(avg_color)}")
@@ -157,7 +154,7 @@ elif page == "패션 & 퍼스널 컬러 👗":
                 ax.axis('off')
                 st.pyplot(fig)
             else:
-                st.warning("얼굴을 찾을 수 없습니다. 얼굴이 잘 안 보이는 경우입니다.")
+                st.warning("얼굴을 찾을 수 없습니다.")
         else:
             st.info("얼굴 이미지를 업로드하면 자동으로 퍼스널 컬러 분석이 가능합니다.")
 
