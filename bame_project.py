@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # ---------------------------
 # OpenAI API 키 로드 (Secret 방식)
 # ---------------------------
-openai.api_key = st.secrets["OPENAI_API_KEY = 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"]
+openai.api_key = st.secrets["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"]
 
 # ---------------------------
 # 기본 UI 설정
