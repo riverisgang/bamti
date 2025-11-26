@@ -1,6 +1,5 @@
 import streamlit as st
 import numpy as np
-import cv2
 from PIL import Image
 import openai
 import matplotlib.pyplot as plt
@@ -40,7 +39,7 @@ def card(text):
     )
 
 # ---------------------------
-# AI 대화 추천
+# AI 대화 코치 (OpenAI)
 # ---------------------------
 def ai_generate_replies(relation, mood, chat_log):
     prompt = f"""
@@ -59,7 +58,6 @@ def ai_generate_replies(relation, mood, chat_log):
             messages=[{"role":"user", "content": prompt}],
             temperature=0.7
         )
-
         output = res.choices[0].message["content"].strip()
         replies = output.split("\n")
         replies = [r.replace("-", "").strip() for r in replies if r.strip()]
@@ -68,25 +66,27 @@ def ai_generate_replies(relation, mood, chat_log):
         return ["⚠️ AI 요청에 문제가 발생했습니다. 다시 시도해주세요."]
 
 # ---------------------------
-# 퍼스널컬러 이미지 분석
+# 퍼스널컬러 분석(Pillow 버전)
 # ---------------------------
-def analyze_skin_tone(image):
+def analyze_skin_tone_pillow(image):
     img = np.array(image)
-    img_cv = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    y, cr, cb = cv2.split(img_cv)
 
-    avg_cr = np.mean(cr)
-    avg_cb = np.mean(cb)
-    avg_y = np.mean(y)
+    # 중앙 부분만 샘플링 (얼굴 주변 잡색 방지)
+    h, w, _ = img.shape
+    crop = img[h//4:h*3//4, w//4:w*3//4]
 
-    if avg_cr > 140:
+    avg_rgb = np.mean(crop.reshape(-1,3), axis=0)
+    r, g, b = avg_rgb
+
+    # 매우 단순화한 웜/쿨 분류 (R-B 차이)
+    if r - b > 15:
         tone = "Warm Tone"
         desc = "웜톤 (노란/골드 계열이 잘 어울려요!)"
     else:
         tone = "Cool Tone"
         desc = "쿨톤 (블루/실버 계열이 잘 어울려요!)"
 
-    return tone, desc, avg_y, avg_cr, avg_cb
+    return tone, desc, avg_rgb
 
 def show_palette(colors):
     fig, ax = plt.subplots(figsize=(4,1))
@@ -95,9 +95,8 @@ def show_palette(colors):
     ax.set_yticks([])
     st.pyplot(fig)
 
-
 # ---------------------------
-# 페이지 구분
+# 페이지 UI
 # ---------------------------
 st.sidebar.title("🌙 BAME")
 page = st.sidebar.radio(
@@ -109,17 +108,16 @@ page = st.sidebar.radio(
 # HOME
 # ---------------------------
 if page == "Home":
-    st.markdown(f"""
-        <h1 style="color:{PRIMARY}; font-weight:700;">🌙 BAME (bamtiescape)</h1>
-        <p style="color:{PRIMARY};">
-        현대인의 SNS·대화·패션 고민을 한 번에 해결하는 통합 자기관리 앱입니다.
-        </p>
-    """, unsafe_allow_html=True)
-
-    card("✔ AI 기반 대화 코치로 자연스러운 답변 추천")  
-    card("✔ 이미지 기반 퍼스널컬러 분석 및 코디 가이드")
+    st.markdown(
+        f"""
+        <h1 style="color:{PRIMARY};">🌙 BAME (bamtiescape)</h1>
+        <p style="color:{PRIMARY};">SNS·대화·패션 고민을 해결하는 통합 자기관리 앱</p>
+        """, unsafe_allow_html=True
+    )
+    card("✔ AI 기반 대화 코치")
+    card("✔ 이미지 기반 퍼스널컬러 분석")
     card("✔ SNS 브랜딩 기능(업데이트 예정)")
-    card("✔ 최신 밈 설명 제공")
+    card("✔ 최신 밈 설명")
     card("✔ ‘밤티 점수’로 오늘의 상태 체크")
 
 # ---------------------------
@@ -139,7 +137,7 @@ elif page == "대화 코치(AI)":
             card(r)
 
 # ---------------------------
-# 퍼스널컬러 자동 분석
+# 퍼스널컬러 분석 (CV2 없이)
 # ---------------------------
 elif page == "퍼스널컬러 분석":
     st.subheader("🎨 퍼스널컬러 자동 분석")
@@ -150,35 +148,35 @@ elif page == "퍼스널컬러 분석":
         image = Image.open(img_file).convert("RGB")
         st.image(image, caption="업로드한 이미지", use_column_width=True)
 
-        tone, desc, y, cr, cb = analyze_skin_tone(image)
+        tone, desc, avg_rgb = analyze_skin_tone_pillow(image)
 
         st.markdown(f"### 🔍 분석 결과: **{tone}**")
         card(desc)
 
-        st.markdown("### 🎨 평균 톤 정보")
-        card(f"밝기(Y): {y:.2f} | Cr: {cr:.2f} | Cb: {cb:.2f}")
+        st.markdown("### 평균 RGB")
+        card(f"R: {avg_rgb[0]:.2f} | G: {avg_rgb[1]:.2f} | B: {avg_rgb[2]:.2f}")
 
         st.markdown("### 추천 컬러 팔레트")
         if tone == "Warm Tone":
-            palette = [[255,204,153], [255,153,102], [204,153,102], [153,102,51]]
+            palette = [[255/255,204/255,153/255], [255/255,153/255,102/255], [204/255,153/255,102/255]]
         else:
-            palette = [[153,204,255], [102,153,255], [102,102,204], [51,51,153]]
-        palette = [np.array(p)/255 for p in palette]
+            palette = [[153/255,204/255,255/255], [102/255,153/255,255/255], [102/255,102/255,204/255]]
+
         show_palette(palette)
 
 # ---------------------------
-# SNS 브랜딩 (보류)
+# SNS 브랜딩
 # ---------------------------
 elif page == "SNS 브랜딩(보류)":
     st.subheader("📷 SNS 브랜딩 기능")
-    card("현재 재구성 중입니다! 곧 더 완성도 높은 버전으로 돌아올게요 ✨")
+    card("현재 재구성 중입니다. 더 업그레이드해서 돌아올게요!")
 
 # ---------------------------
 # 밈 설명
 # ---------------------------
 elif page == "밈 설명":
     st.subheader("😂 최신 밈 설명")
-    st.write("이 페이지는 너희 팀이 직접 콘텐츠 넣으면 돼!")
+    st.write("여기에 너희 팀이 직접 콘텐츠 추가하면 돼!")
 
 # ---------------------------
 # 밤티 점수
