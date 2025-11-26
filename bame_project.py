@@ -4,7 +4,8 @@ import random
 from PIL import Image
 import numpy as np
 import openai
-
+st.cache_data.clear()
+st.cache_resource.clear()
 # ---------------- 기본 설정 ----------------
 st.set_page_config(
     page_title="BAME - Bamti Escape",
