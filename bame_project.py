@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import openai
 
 # ---------------- OpenAI API ----------------
-openai.api_key = "sk-your-openai-key"  # 실제 키는 안전하게 관리하세요
+openai.api_key = "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 야. "  # 실제 키는 안전하게 관리하세요
 
 # ---------------- 기본 설정 ----------------
 st.set_page_config(
