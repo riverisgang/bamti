@@ -4,6 +4,7 @@ import random
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 import openai
 
 # ---------------- OpenAI API ----------------
@@ -98,10 +99,14 @@ elif page == "대화 코치 💬":
                     messages=[{"role":"user","content":prompt}],
                     temperature=0.7,
                 )
-                answers = response.choices[0].message.content.split("\n")
-                for msg in answers:
-                    if msg.strip():
-                        st.markdown(f"<div class='card'>{msg}</div>", unsafe_allow_html=True)
+                
+                message_content = response['choices'][0]['message']['content']
+                
+                for msg in message_content.split("\n"):
+                    clean_msg = msg.strip()
+                    if clean_msg:
+                        st.markdown(f"<div class='card'>{clean_msg}</div>", unsafe_allow_html=True)
+                        
             except Exception as e:
                 st.error(f"AI 답변 생성 오류 발생: {e}")
 
@@ -112,33 +117,51 @@ elif page == "패션 & 퍼스널 컬러 👗":
     line()
     col1, col2 = st.columns(2)
     with col1:
-        personal_color = st.selectbox("퍼스널 컬러 🎨", ["모르겠음","봄 웜","여름 쿨","가을 웜","겨울 쿨"])
         style_mood = st.selectbox("스타일 무드 😎", ["귀엽게 💕","시크하게 🖤","공부하러 가는 날 📚","사진 많이 찍는 날 📸","편하게 🛋️"])
         weather = st.selectbox("날씨 🌤️", ["상관 없음","더움 🔥","선선함 🍃","추움 ❄️"])
     with col2:
         items = st.multiselect("오늘 입을 옷 👕", ["후드티","셔츠","블라우스","니트","청바지","슬랙스","스커트","원피스","운동화","로퍼","부츠"])
         acc = st.multiselect("액세서리 💍", ["모자","목걸이","귀걸이","시계","가방","헤어핀"])
-        face_img = st.file_uploader("얼굴 이미지 업로드 (컬러 분석)", type=["png","jpg","jpeg"])
-    
+        face_img = st.file_uploader("얼굴 이미지 업로드 (퍼스널 컬러 분석)", type=["png","jpg","jpeg"])
+
     if st.button("👗 코디 추천"):
         st.markdown("### ✨ 오늘의 코디 제안")
         if face_img:
             img = Image.open(face_img).convert("RGB")
             img_arr = np.array(img)
-            avg_color = img_arr.mean(axis=(0,1)).astype(int)
-            st.write(f"- 업로드된 이미지 평균 톤(RGB): {tuple(avg_color)}")
-            fig, ax = plt.subplots(figsize=(4,1))
-            ax.imshow([[avg_color/255]])
-            ax.axis('off')
-            st.pyplot(fig)
-        color_msg = {
-            "봄 웜":"크림, 코랄, 라이트 베이지 추천",
-            "여름 쿨":"라벤더, 소라색, 쿨핑크 추천",
-            "가을 웜":"브라운, 카멜, 카키, 버건디 추천",
-            "겨울 쿨":"블랙·화이트, 대비 강한 레드/블루 추천",
-            "모르겠음":"화이트 + 포인트 컬러 하나 조합이 안전"
-        }
-        st.write(f"- 퍼스널 컬러: {color_msg.get(personal_color)}")
+
+            # 얼굴 검출
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            gray = cv2.cvtColor(img_arr, cv2.COLOR_RGB2GRAY)
+            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+            if len(faces) > 0:
+                x, y, w, h = faces[0]
+                face_region = img_arr[y:y+h, x:x+w]
+
+                avg_color = face_region.mean(axis=(0,1)).astype(int)
+                st.write(f"- 얼굴 평균 RGB: {tuple(avg_color)}")
+
+                R, G, B = avg_color
+                if R > B:
+                    tone = "Warm"
+                    palette = ["#FFDAB9", "#FF7F50", "#FFE4B5"]
+                else:
+                    tone = "Cool"
+                    palette = ["#ADD8E6", "#87CEFA", "#9370DB"]
+
+                st.write(f"- 분석 톤: {tone}")
+
+                fig, ax = plt.subplots(figsize=(4,1))
+                ax.imshow([palette])
+                ax.axis('off')
+                st.pyplot(fig)
+            else:
+                st.warning("얼굴을 찾을 수 없습니다. 얼굴이 잘 안 보이는 경우입니다.")
+        else:
+            st.info("얼굴 이미지를 업로드하면 자동으로 퍼스널 컬러 분석이 가능합니다.")
+
+        # 스타일 & 아이템 출력
         style_msg = {
             "귀엽게 💕":"루즈핏 상의 + 밝은 하의",
             "시크하게 🖤":"올블랙 또는 블랙+그레이",
@@ -165,16 +188,11 @@ elif page == "SNS 브랜딩 📸":
             st.warning("메시지를 입력해주세요")
         else:
             st.markdown("### ✨ 추천 브랜딩 요소")
-            filter_rec = "자연광 느낌 필터"
-            font_rec = "깔끔한 산세리프 폰트"
-            music_rec = "잔잔한 BGM"
-            sticker_rec = "하트, 별, 체크리스트 스티커"
-            caption_tip = "짧은 한 문장 + 구체적 이야기"
-            st.write(f"- 추천 필터: {filter_rec}")
-            st.write(f"- 추천 폰트: {font_rec}")
-            st.write(f"- 추천 음악/사운드: {music_rec}")
-            st.write(f"- 스티커 사용 팁: {sticker_rec}")
-            st.write(f"- 캡션 작성 팁: {caption_tip}")
+            st.write("- 추천 필터: 자연광 느낌 필터")
+            st.write("- 추천 폰트: 깔끔한 산세리프 폰트")
+            st.write("- 추천 음악/사운드: 잔잔한 BGM")
+            st.write("- 스티커 사용 팁: 하트, 별, 체크리스트 스티커")
+            st.write("- 캡션 작성 팁: 짧은 한 문장 + 구체적 이야기")
 
 # ----------------- 밈 설명 -----------------
 elif page == "요즘 밈 설명 😂":
@@ -200,7 +218,6 @@ elif page == "오늘의 밤티 점수 🔮":
     if st.button("🔮 점수 보기"):
         score = int((q1+q2+q3+q4+q5)/25*100)
         st.metric("오늘의 밤티 점수", f"{score}/100")
-        # 원형 차트
         fig, ax = plt.subplots()
         ax.pie([score,100-score], labels=["점수","남은"], colors=["#ff6f61","#cfcfcf"], startangle=90, counterclock=False)
         st.pyplot(fig)
