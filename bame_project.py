@@ -134,10 +134,39 @@ elif page == "대화 코치 💬":
 elif page == "패션 & 퍼스널 컬러 👗":
     st.markdown("## 코디 추천 👗")
     line()
-    style_mood = st.selectbox("오늘의 스타일 무드 😎", ["귀엽게 💕", "시크하게 🖤", "공부하러 가는 날 📚", "사진 많이 찍는 날 📸", "편하게 🛋️"])
+    # 계절형 분류 함수
+def seasonal_classify(h, s, v):
+    if 20 <= h <= 50 and s > 40 and v > 60:
+        return "봄웜 (Spring Warm)"
+    elif 150 <= h <= 200 and s < 40 and v > 50:
+        return "여름쿨 (Summer Cool)"
+    elif 30 <= h <= 60 and s > 40 and v < 60:
+        return "가을웜 (Autumn Warm)"
+    elif 180 <= h <= 260 and v > 60:
+        return "겨울쿨 (Winter Cool)"
+    else:
+        return "중립톤 (Neutral)"
+
+# 팔레트 예시
+palettes = {
+    "봄웜 (Spring Warm)": ["#FFD1DC", "#FFFACD", "#B0E0E6"],
+    "여름쿨 (Summer Cool)": ["#AEC6CF", "#CFCFC4", "#E6E6FA"],
+    "가을웜 (Autumn Warm)": ["#C19A6B", "#556B2F", "#FFD700"],
+    "겨울쿨 (Winter Cool)": ["#0000FF", "#000000", "#FFFFFF"],
+    "중립톤 (Neutral)": ["#808080", "#D3D3D3", "#A9A9A9"]
+}
+
+# 패션 & 퍼스널 컬러 페이지
+elif page == "패션 & 퍼스널 컬러 👗":
+    st.markdown("## 퍼스널 컬러 & 코디 추천 👗")
+    line()
+    style_mood = st.selectbox(
+        "오늘의 스타일 무드 😎",
+        ["귀엽게 💕", "시크하게 🖤", "공부하러 가는 날 📚", "사진 많이 찍는 날 📸", "편하게 🛋️"]
+    )
     uploaded_image = st.file_uploader("얼굴 사진 업로드 📸", type=["jpg","jpeg","png"])
 
-    if st.button("👗 퍼스널 컬러 분석"):
+    if st.button("👗 퍼스널 컬러 + 코디 분석"):
         if not uploaded_image:
             st.warning("얼굴 사진을 업로드 해 주세요.")
         else:
@@ -145,12 +174,30 @@ elif page == "패션 & 퍼스널 컬러 👗":
             np_image = np.array(image)
             avg_rgb = calc_mean_color(np_image)
             h_mean, s_mean, v_mean = calc_mean_hsv(np_image)
-            wc_type = warm_cool_classify(avg_rgb)
+            season = seasonal_classify(h_mean, s_mean, v_mean)
 
-            st.write(f"평균 RGB: {avg_rgb} / HEX: {rgb_to_hex(avg_rgb)}")
-            st.write(f"HSV 평균: Hue {h_mean}°, Saturation {s_mean}%, Value {v_mean}%")
-            st.write(f"분류: {wc_type.upper()} 계열")
-            show_color_block(avg_rgb, caption="추정 퍼스널 컬러")
+            st.write(f"분류 결과: {season}")
+            st.write("추천 팔레트:")
+            for hex_color in palettes[season]:
+                show_color_block(hex_to_rgb(hex_color), caption=hex_color)
+
+            # AI 코디 추천
+            prompt = f"""
+당신의 퍼스널 컬러는 {season} 입니다.
+오늘의 스타일 무드는 {style_mood} 입니다.
+
+퍼스널 컬러와 무드에 맞는 오늘의 코디를 추천해줘.
+- 상의/하의/원피스/액세서리/신발 중 3~4가지 아이템
+- 색상은 퍼스널 컬러 팔레트와 잘 어울리게
+- 설명은 간단하고 직관적으로
+"""
+            response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role":"user","content":prompt}],
+                temperature=0.8,
+            )
+            st.markdown("### ✨ 오늘의 코디 추천")
+            st.write(response.choices[0].message.content.strip())
 
 # =========================================================
 # SNS 브랜딩 (AI 모델 연동)
